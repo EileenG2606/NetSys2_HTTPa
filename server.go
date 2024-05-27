@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -8,12 +9,12 @@ import (
 )
 
 func main(){
-	mux:= http.NewServeMux()
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	mux:=http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request){
 		fmt.Fprint(w, "Yes, This is from server")
 	})
-	mux.HandleFunc("/post", func(w http.ResponseWriter, r *http.Request) {
-		data, err:= io.ReadAll(r.Body)
+	mux.HandleFunc("/post", func(w http.ResponseWriter, r *http.Request){
+		data,err:= io.ReadAll(r.Body)
 		if err!=nil{
 			return
 		}
@@ -26,13 +27,16 @@ func main(){
 		fmt.Fprint(w, "Data successfully received by server")
 	})
 
-	server := http.Server{
-		Addr:	"localhost:5678",
+	server:= http.Server{
+		Addr:    "localhost:5678",
 		Handler: mux,
+		TLSConfig: &tls.Config{
+			MinVersion: tls.VersionTLS12,
+		},
 	}
-	
-	err := server.ListenAndServe()
+
+	err:= server.ListenAndServeTLS("cert.pem", "key.pem")
 	if err!=nil{
-		return
+		panic(err)
 	}
 }
